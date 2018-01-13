@@ -123,9 +123,7 @@ int main()
     	  estimate(3) = v2;
     	  
     	  estimations.push_back(estimate);
-
     	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
-
           json msgJson;
           msgJson["estimate_x"] = p_x;
           msgJson["estimate_y"] = p_y;
@@ -133,8 +131,12 @@ int main()
           msgJson["rmse_y"] =  RMSE(1);
           msgJson["rmse_vx"] = RMSE(2);
           msgJson["rmse_vy"] = RMSE(3);
+	  msgJson["x_gt"] = x_gt;
+	  msgJson["y_gt"] = y_gt;
+	  msgJson["vx_gt"] = vx_gt;
+	  msgJson["vy_gt"] = vy_gt;
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
-          // std::cout << msg << std::endl;
+          //std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 	  
         }
