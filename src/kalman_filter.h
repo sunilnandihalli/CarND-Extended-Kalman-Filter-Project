@@ -16,6 +16,7 @@ public:
   void Predict();
   void Update(const Eigen::VectorXd &z /*measurement at k+1*/);
   void UpdateEKF(const Eigen::VectorXd &z);
+  void UpdatePosterior(const Eigen::VectorXd &y);
 };
 
 #endif /* KALMAN_FILTER_H_ */

@@ -37,6 +37,8 @@ FusionEKF::FusionEKF() {
     * Set the process and measurement noises
   */
   H_laser_ <<1,0,0,0,0,1,0,0;
+  Qv = MatrixXd(2,2);
+  Qv <<9,0,0,9;
 
 }
 
@@ -58,34 +60,42 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double ct(cos(theta)),st(sin(theta));
       ekf_.x_ << ro*ct,ro*st,ro_dot/ct,0;
       Hj_ = tools.CalculateJacobian(ekf_.x_);
-      ekf_.P_ = Hj_.transpose()*R_radar_*Hj_;
+      ekf_.P_ <<
+	1,0,0,0,
+	0,1,0,0,
+	0,0,1000,0,
+	0,0,0,1000;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       ekf_.x_<<measurement_pack.raw_measurements_(0),measurement_pack.raw_measurements_(1),0.0,0.0;
       
-      ekf_.P_ = H_laser_.transpose()*R_laser_*H_laser_;
+      ekf_.P_ <<
+	1,0,0,0,
+	0,1,0,0,
+	0,0,10,0,
+	0,0,0,10;
     }
     previous_timestamp_ = measurement_pack.timestamp_;
     is_initialized_ = true;
     return;
   }
   auto dt = 1e-6*(measurement_pack.timestamp_ - previous_timestamp_);
-
-  ekf_.F_ <<
-    1,0,dt,0,
-    0,1,0,dt,
-    0,0,1,0,
-    0,0,0,1;
-  MatrixXd G = MatrixXd(4,2);
-  G<<
-    0.5*dt*dt,0,
-    0,0.5*dt*dt,
-    dt,0,
-    0,dt;
-  MatrixXd Qv = MatrixXd(2,2);
-  Qv <<9,0,0,9;
-  ekf_.Q_ = G*Qv*G.transpose();
-  ekf_.Predict();
+  
+  if(dt>0.0001) {
+    ekf_.F_ <<
+      1,0,dt,0,
+      0,1,0,dt,
+      0,0,1,0,
+      0,0,0,1;
+    MatrixXd G = MatrixXd(4,2);
+    G<<
+      0.5*dt*dt,0,
+      0,0.5*dt*dt,
+      dt,0,
+      0,dt;
+    ekf_.Q_ = G*Qv*G.transpose();
+    ekf_.Predict();
+  }
   previous_timestamp_ = measurement_pack.timestamp_;  
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     ekf_.R_= R_radar_;
